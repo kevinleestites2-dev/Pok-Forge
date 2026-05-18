@@ -67,6 +67,11 @@
             animation-delay: var(--delay);
             filter: drop-shadow(0 0 8px var(--clr));
         }
+        .runner img {
+            width: 48px;
+            height: 48px;
+            image-rendering: pixelated;
+        }
         @keyframes runAcross {
             0%   { left: -60px; }
             100% { left: calc(100% + 60px); }
@@ -541,18 +546,22 @@ document.getElementById('yr').textContent = new Date().getFullYear();
 (function(){
   const strip=document.getElementById('sprite-strip');
   const sprites=[
-    {e:'🐊',clr:'#00d4aa',spd:'16s',delay:'0s'},
-    {e:'🦩',clr:'#ff6b35',spd:'20s',delay:'3.5s'},
-    {e:'🐢',clr:'#4caf50',spd:'24s',delay:'1s'},
-    {e:'🐉',clr:'#a855f7',spd:'13s',delay:'6s'},
-    {e:'⚡',clr:'#ffd700',spd:'9s', delay:'9.5s'},
-    {e:'🦋',clr:'#00d4aa',spd:'17s',delay:'4s'},
-    {e:'🐺',clr:'#ff8f35',spd:'12s',delay:'7s'},
+    {img:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png',  clr:'#ffd700',spd:'11s',delay:'0s'},   // Pikachu
+    {img:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/6.png',   clr:'#ff4500',spd:'9s', delay:'2s'},   // Charizard
+    {img:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png',   clr:'#4caf50',spd:'18s',delay:'5s'},   // Bulbasaur
+    {img:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/4.png',   clr:'#ff6b35',spd:'14s',delay:'1s'},   // Charmander
+    {img:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/7.png',   clr:'#00d4aa',spd:'20s',delay:'7s'},   // Squirtle
+    {img:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/133.png', clr:'#ffd700',spd:'13s',delay:'3.5s'}, // Eevee
+    {img:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/39.png',  clr:'#ff9ec8',spd:'22s',delay:'9s'},   // Jigglypuff
+    {img:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/143.png', clr:'#a0c8ff',spd:'25s',delay:'6s'},   // Snorlax
   ];
   sprites.forEach(sp=>{
     const el=document.createElement('div');
     el.className='runner';
-    el.textContent=sp.e;
+    const img=document.createElement('img');
+    img.src=sp.img;
+    img.alt='sprite';
+    el.appendChild(img);
     el.style.cssText=`--spd:${sp.spd};--delay:${sp.delay};--clr:${sp.clr};bottom:${4+Math.random()*10}px;`;
     strip.appendChild(el);
   });
