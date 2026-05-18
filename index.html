@@ -579,60 +579,84 @@ document.getElementById('yr').textContent = new Date().getFullYear();
   });
 
   function makeDraggable(el){
-    let dragging=false, offsetX=0, offsetY=0, animX=0, rafId=null;
+    let dragging=false, offsetX=0, offsetY=0, posX=0, posY=0, velX=0, lastX=0, rafId=null;
 
     function getXY(e){ return e.touches ? {x:e.touches[0].clientX,y:e.touches[0].clientY} : {x:e.clientX,y:e.clientY}; }
 
-    // Read the sprite's current rendered position via getBoundingClientRect
-    function currentRect(){ return el.getBoundingClientRect(); }
+    function tick(){
+      if(!dragging){
+        // drift back to strip y, keep x momentum going
+        posY += (window.innerHeight - 120 - posY) * 0.12;
+        posX += velX;
+        velX *= 0.95;
+        // wrap around screen
+        if(posX > window.innerWidth + 60) posX = -60;
+        if(posX < -60) posX = window.innerWidth + 60;
+        el.style.left = posX + 'px';
+        el.style.top  = posY + 'px';
+        if(Math.abs(velX) > 0.5){
+          rafId = requestAnimationFrame(tick);
+        } else {
+          // hand back to CSS animation
+          el.style.removeProperty('position');
+          el.style.removeProperty('left');
+          el.style.removeProperty('top');
+          el.style.bottom = '72px';
+          el.style.animation = '';
+          const pct = Math.max(0, Math.min(posX / window.innerWidth, 1));
+          const dur = parseFloat(el.style.getPropertyValue('--spd')) || 12;
+          el.style.animationDelay = `-${pct * dur}s`;
+        }
+        return;
+      }
+      rafId = requestAnimationFrame(tick);
+    }
 
     function onStart(e){
       e.preventDefault();
       e.stopPropagation();
-      const pos=getXY(e);
-      const rect=currentRect();
-      offsetX=pos.x - rect.left;
-      offsetY=pos.y - rect.top;
-      dragging=true;
+      const pos = getXY(e);
+      const rect = el.getBoundingClientRect();
+      offsetX = pos.x - rect.left;
+      offsetY = pos.y - rect.top;
+      posX = rect.left;
+      posY = rect.top;
+      lastX = pos.x;
+      velX = 0;
+      dragging = true;
 
-      // Freeze CSS animation, lock position to where it actually is right now
-      el.style.animationPlayState='paused';
-      el.style.position='fixed';
-      el.style.left=rect.left+'px';
-      el.style.top=rect.top+'px';
-      el.style.bottom='auto';
-      el.style.zIndex='999';
-      el.style.filter=`drop-shadow(0 0 22px var(--clr)) brightness(1.5)`;
-      el.style.cursor='grabbing';
+      // Kill CSS animation — take over with JS positioning
+      el.style.animation = 'none';
+      el.style.position = 'fixed';
+      el.style.left = posX + 'px';
+      el.style.top  = posY + 'px';
+      el.style.bottom = 'auto';
+      el.style.zIndex = '999';
+      el.style.filter = `drop-shadow(0 0 22px var(--clr)) brightness(1.5)`;
+      el.style.cursor = 'grabbing';
+
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(tick);
     }
 
     function onMove(e){
       if(!dragging) return;
       e.preventDefault();
-      const pos=getXY(e);
-      el.style.left=(pos.x - offsetX)+'px';
-      el.style.top=(pos.y - offsetY)+'px';
+      const pos = getXY(e);
+      velX = pos.x - lastX;
+      lastX = pos.x;
+      posX = pos.x - offsetX;
+      posY = pos.y - offsetY;
+      el.style.left = posX + 'px';
+      el.style.top  = posY + 'px';
     }
 
     function onEnd(){
       if(!dragging) return;
-      dragging=false;
-
-      // Where did we drop it horizontally?
-      const dropX=parseFloat(el.style.left)||0;
-      const pct=Math.max(0, Math.min(dropX / window.innerWidth, 1));
-      const dur=parseFloat(getComputedStyle(el).getPropertyValue('--spd'))||12;
-
-      // Restore running — resume animation from drop position
-      el.style.removeProperty('position');
-      el.style.removeProperty('left');
-      el.style.removeProperty('top');
-      el.style.bottom='72px';
-      el.style.zIndex='';
-      el.style.filter='';
-      el.style.cursor='grab';
-      el.style.animationDelay=`-${pct * dur}s`;
-      el.style.animationPlayState='running';
+      dragging = false;
+      el.style.filter = '';
+      el.style.cursor = 'grab';
+      // let tick() handle drift + handoff
     }
 
     el.addEventListener('mousedown',  onStart);
