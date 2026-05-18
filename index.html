@@ -1,0 +1,1659 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PokéForge | Forge Your Destiny</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --accent-fire: #ff6b35;
+            --accent-water: #00d4aa;
+            --accent-magic: #a855f7;
+            --text-primary: #f0f0f5;
+            --text-secondary: #8888aa;
+            --glow-fire: 0 0 30px rgba(255, 107, 53, 0.5);
+            --glow-water: 0 0 30px rgba(0, 212, 170, 0.5);
+            --glow-magic: 0 0 30px rgba(168, 85, 247, 0.5);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Exo 2', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background */
+        .bg-animation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: linear-gradient(135deg, var(--bg-primary) 0%, var(--bg-secondary) 50%, #1a1a2e 100%);
+        }
+
+        .bg-animation::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: 
+                radial-gradient(ellipse at 20% 30%, rgba(255, 107, 53, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 70%, rgba(0, 212, 170, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(168, 85, 247, 0.08) 0%, transparent 60%);
+            animation: bgPulse 15s ease-in-out infinite;
+        }
+
+        @keyframes bgPulse {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            25% { transform: translate(2%, 2%) rotate(1deg); }
+            50% { transform: translate(0, 4%) rotate(0deg); }
+            75% { transform: translate(-2%, 2%) rotate(-1deg); }
+        }
+
+        /* Particles */
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .particle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: var(--accent-fire);
+            border-radius: 50%;
+            opacity: 0.3;
+            animation: float 20s infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.3; }
+            90% { opacity: 0.3; }
+            100% { transform: translateY(-100vh) rotate(720deg); opacity: 0; }
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Header */
+        header {
+            padding: 24px 0;
+            position: relative;
+            z-index: 10;
+        }
+
+        .logo {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, var(--accent-fire), var(--accent-water));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: var(--glow-fire);
+            letter-spacing: 2px;
+        }
+
+        .tagline {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            font-weight: 300;
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 80px 0;
+            text-align: center;
+            position: relative;
+        }
+
+        .hero h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(2rem, 6vw, 4rem);
+            font-weight: 700;
+            margin-bottom: 24px;
+            line-height: 1.2;
+        }
+
+        .hero h1 span {
+            display: block;
+            background: linear-gradient(90deg, var(--accent-fire), var(--accent-water), var(--accent-magic));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: gradientShift 5s ease infinite;
+            background-size: 200% 200%;
+        }
+
+        @keyframes gradientShift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .hero p {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin: 0 auto 48px;
+            line-height: 1.6;
+        }
+
+        /* Prompt Input */
+        .prompt-container {
+            max-width: 700px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .prompt-input {
+            width: 100%;
+            min-height: 150px;
+            padding: 24px;
+            background: rgba(18, 18, 26, 0.8);
+            border: 2px solid rgba(255, 107, 53, 0.3);
+            border-radius: 16px;
+            color: var(--text-primary);
+            font-family: 'Exo 2', sans-serif;
+            font-size: 1.1rem;
+            resize: vertical;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        .prompt-input:focus {
+            outline: none;
+            border-color: var(--accent-fire);
+            box-shadow: var(--glow-fire), 0 0 60px rgba(255, 107, 53, 0.2);
+        }
+
+        .prompt-input::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.7;
+        }
+
+        .char-count {
+            position: absolute;
+            bottom: 12px;
+            right: 16px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Buttons */
+        .btn-forge {
+            margin-top: 24px;
+            padding: 18px 48px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--bg-primary);
+            background: linear-gradient(135deg, var(--accent-fire), #ff8f35);
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-forge::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .btn-forge:hover {
+            transform: scale(1.05);
+            box-shadow: var(--glow-fire);
+        }
+
+        .btn-forge:hover::before {
+            left: 100%;
+        }
+
+        .btn-forge:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Loading Overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(10, 10, 15, 0.95);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            flex-direction: column;
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+
+        .forge-animation {
+            width: 200px;
+            height: 200px;
+            position: relative;
+        }
+
+        .forge-ring {
+            position: absolute;
+            border: 3px solid transparent;
+            border-radius: 50%;
+            animation: forgeSpin 2s linear infinite;
+        }
+
+        .forge-ring:nth-child(1) {
+            width: 100%;
+            height: 100%;
+            border-top-color: var(--accent-fire);
+            border-right-color: var(--accent-fire);
+        }
+
+        .forge-ring:nth-child(2) {
+            width: 70%;
+            height: 70%;
+            top: 15%;
+            left: 15%;
+            border-bottom-color: var(--accent-water);
+            border-left-color: var(--accent-water);
+            animation-direction: reverse;
+            animation-duration: 1.5s;
+        }
+
+        .forge-ring:nth-child(3) {
+            width: 40%;
+            height: 40%;
+            top: 30%;
+            left: 30%;
+            border-top-color: var(--accent-magic);
+            animation-duration: 1s;
+        }
+
+        @keyframes forgeSpin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            margin-top: 40px;
+            color: var(--accent-fire);
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        .loading-stages {
+            margin-top: 24px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+
+        .stage {
+            opacity: 0.3;
+            transition: opacity 0.5s ease;
+            margin: 8px 0;
+        }
+
+        .stage.active {
+            opacity: 1;
+            color: var(--accent-water);
+        }
+
+        .stage.complete {
+            opacity: 1;
+            color: var(--accent-fire);
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Game Container */
+        .game-container {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-primary);
+            z-index: 100;
+        }
+
+        .game-container.active {
+            display: block;
+        }
+
+        #game-canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Game UI Overlay */
+        .game-ui {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+            z-index: 110;
+        }
+
+        .game-ui.active {
+            display: flex;
+        }
+
+        .game-btn {
+            padding: 12px 20px;
+            font-family: 'Exo 2', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            background: rgba(18, 18, 26, 0.9);
+            border: 1px solid rgba(255, 107, 53, 0.5);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .game-btn:hover {
+            background: rgba(255, 107, 53, 0.2);
+            border-color: var(--accent-fire);
+            box-shadow: var(--glow-fire);
+        }
+
+        /* Dialogue Box */
+        .dialogue-box {
+            position: fixed;
+            bottom: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 800px;
+            background: rgba(18, 18, 26, 0.95);
+            border: 2px solid var(--accent-water);
+            border-radius: 16px;
+            padding: 24px;
+            display: none;
+            z-index: 110;
+            backdrop-filter: blur(10px);
+            box-shadow: var(--glow-water);
+        }
+
+        .dialogue-box.active {
+            display: block;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { transform: translateX(-50%) translateY(20px); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+
+        .dialogue-speaker {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1rem;
+            color: var(--accent-water);
+            margin-bottom: 12px;
+        }
+
+        .dialogue-text {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: var(--text-primary);
+        }
+
+        .dialogue-close {
+            position: absolute;
+            top: 12px;
+            right: 16px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .dialogue-close:hover {
+            color: var(--accent-fire);
+        }
+
+        /* God Mode */
+        .god-mode-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(168, 85, 247, 0.1);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1001;
+            animation: godModeFlash 0.5s ease;
+        }
+
+        .god-mode-overlay.active {
+            display: flex;
+        }
+
+        @keyframes godModeFlash {
+            0% { background: rgba(168, 85, 247, 0); }
+            50% { background: rgba(168, 85, 247, 0.4); }
+            100% { background: rgba(168, 85, 247, 0.1); }
+        }
+
+        .god-mode-message {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2rem;
+            color: var(--accent-magic);
+            text-shadow: var(--glow-magic);
+            animation: godModePulse 2s ease-in-out infinite;
+        }
+
+        @keyframes godModePulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+        }
+
+        /* God Mode Panel */
+        .god-mode-panel {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 90%;
+            max-width: 600px;
+            background: rgba(18, 18, 26, 0.98);
+            border: 2px solid var(--accent-magic);
+            border-radius: 20px;
+            padding: 40px;
+            display: none;
+            z-index: 1002;
+            box-shadow: var(--glow-magic);
+        }
+
+        .god-mode-panel.active {
+            display: block;
+            animation: panelIn 0.5s ease;
+        }
+
+        @keyframes panelIn {
+            from { transform: translate(-50%, -50%) scale(0.8); opacity: 0; }
+            to { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        }
+
+        .god-mode-panel h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.8rem;
+            color: var(--accent-magic);
+            margin-bottom: 24px;
+            text-align: center;
+        }
+
+        .genre-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-top: 24px;
+        }
+
+        .genre-btn {
+            padding: 16px;
+            font-family: 'Exo 2', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            background: rgba(168, 85, 247, 0.1);
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .genre-btn:hover {
+            background: rgba(168, 85, 247, 0.3);
+            border-color: var(--accent-magic);
+            transform: translateY(-2px);
+        }
+
+        /* Footer */
+        footer {
+            padding: 48px 0;
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            position: relative;
+            z-index: 10;
+        }
+
+        footer p {
+            margin: 8px 0;
+        }
+
+        .hint {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            opacity: 0.7;
+            cursor: default;
+            transition: opacity 0.3s ease;
+        }
+
+        .hint:hover {
+            opacity: 1;
+            color: var(--accent-magic);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .logo {
+                font-size: 1.8rem;
+            }
+
+            .hero {
+                padding: 40px 0;
+            }
+
+            .prompt-input {
+                min-height: 120px;
+                padding: 16px;
+                font-size: 1rem;
+            }
+
+            .btn-forge {
+                padding: 14px 32px;
+                font-size: 1rem;
+            }
+
+            .genre-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .dialogue-box {
+                width: 95%;
+                padding: 16px;
+                bottom: 20px;
+            }
+        }
+
+        /* CRT Scanline Effect (optional) */
+        .crt-effect {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1000;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.1),
+                rgba(0, 0, 0, 0.1) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            opacity: 0.3;
+            display: none;
+        }
+
+        .crt-effect.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Background -->
+    <div class="bg-animation"></div>
+    <div class="particles" id="particles"></div>
+    <div class="crt-effect" id="crt-effect"></div>
+
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <div class="logo">PokéForge</div>
+            <div class="tagline">Forge Your Destiny</div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <main class="hero">
+        <div class="container">
+            <h1>Create Your <span>Pokemon World</span></h1>
+            <p>Describe your dream Pokemon game and watch it come to life. Any region, any creatures, any adventure — all from your imagination.</p>
+            
+            <div class="prompt-container">
+                <textarea 
+                    class="prompt-input" 
+                    id="prompt-input"
+                    placeholder="A Pokemon game set in Miami where the starters are a baby alligator, a flamingo, and a manatee..."
+                    maxlength="500"
+                ></textarea>
+                <div class="char-count"><span id="char-current">0</span>/500</div>
+            </div>
+            
+            <button class="btn-forge" id="forge-btn">Forge My Game!</button>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p>&copy; <span id="year">2026</span> PokéForge. All rights reserved.</p>
+            <p class="hint" title="Some secrets are worth finding...">There may or may not be a secret...</p>
+        </div>
+    </footer>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="forge-animation">
+            <div class="forge-ring"></div>
+            <div class="forge-ring"></div>
+            <div class="forge-ring"></div>
+        </div>
+        <div class="loading-text">Forging Your World...</div>
+        <div class="loading-stages">
+            <div class="stage" id="stage-1">Channeling inner spirit...</div>
+            <div class="stage" id="stage-2">Summoning creatures...</div>
+            <div class="stage" id="stage-3">Building world...</div>
+            <div class="stage" id="stage-4">Training AI dialogue...</div>
+            <div class="stage" id="stage-5">Almost ready...</div>
+        </div>
+    </div>
+
+    <!-- Game Container -->
+    <div class="game-container" id="game-container">
+        <div id="game-canvas"></div>
+    </div>
+
+    <!-- Game UI -->
+    <div class="game-ui" id="game-ui">
+        <button class="game-btn" id="save-btn">💾 Save</button>
+        <button class="game-btn" id="menu-btn">☰ Menu</button>
+        <button class="game-btn" id="exit-btn">✕ Exit</button>
+    </div>
+
+    <!-- Dialogue Box -->
+    <div class="dialogue-box" id="dialogue-box">
+        <button class="dialogue-close" id="dialogue-close">&times;</button>
+        <div class="dialogue-speaker" id="dialogue-speaker">NPC</div>
+        <div class="dialogue-text" id="dialogue-text">...</div>
+    </div>
+
+    <!-- God Mode Overlay -->
+    <div class="god-mode-overlay" id="god-mode-overlay">
+        <div class="god-mode-message">You found the secret...</div>
+    </div>
+
+    <!-- God Mode Panel -->
+    <div class="god-mode-panel" id="god-mode-panel">
+        <h2>⚡ GOD MODE ACTIVATED ⚡</h2>
+        <p style="text-align: center; color: var(--text-secondary);">Choose your genre. No limits. No restrictions.</p>
+        <div class="genre-grid">
+            <button class="genre-btn" data-genre="action">⚔️ Action</button>
+            <button class="genre-btn" data-genre="horror">👻 Horror</button>
+            <button class="genre-btn" data-genre="racing">🏎️ Racing</button>
+            <button class="genre-btn" data-genre="survival">🏝️ Survival</button>
+            <button class="genre-btn" data-genre="strategy">♟️ Strategy</button>
+            <button class="genre-btn" data-genre="adventure">🗺️ Adventure</button>
+            <button class="genre-btn" data-genre="fighting">🥊 Fighting</button>
+            <button class="genre-btn" data-genre="rpg">🎭 RPG</button>
+            <button class="genre-btn" data-genre="sandbox">🧱 Sandbox</button>
+        </div>
+    </div>
+
+    <script>
+        // ==================== APP STATE ====================
+        const state = {
+            gameData: null,
+            godMode: false,
+            game: null,
+            player: null,
+            npcs: [],
+            creatures: [],
+            currentBattle: null,
+            playerParty: [],
+            playerInventory: { potions: 5, balls: 10 },
+            playerPosition: { x: 400, y: 300 },
+            currentScene: 'overworld'
+        };
+
+        // ==================== PARTICLES ====================
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 30; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = Math.random() * 100 + '%';
+                particle.style.animationDelay = Math.random() * 20 + 's';
+                particle.style.animationDuration = (15 + Math.random() * 10) + 's';
+                
+                // Vary colors
+                const colors = ['#ff6b35', '#00d4aa', '#a855f7'];
+                particle.style.background = colors[Math.floor(Math.random() * colors.length)];
+                
+                container.appendChild(particle);
+            }
+        }
+
+        // ==================== EASTER EGG CLUES ====================
+        // Clue 1: Console message (already in HTML)
+        console.log('%c The shadows whisper: ghostmode.pokeforge', 'color: #a855f7; font-size: 14px; font-family: monospace;');
+
+        // ==================== UI HANDLERS ====================
+        const promptInput = document.getElementById('prompt-input');
+        const charCurrent = document.getElementById('char-current');
+        const forgeBtn = document.getElementById('forge-btn');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const gameContainer = document.getElementById('game-container');
+        const gameUI = document.getElementById('game-ui');
+        const dialogueBox = document.getElementById('dialogue-box');
+        const godModeOverlay = document.getElementById('god-mode-overlay');
+        const godModePanel = document.getElementById('god-mode-panel');
+
+        // Character counter
+        promptInput.addEventListener('input', () => {
+            charCurrent.textContent = promptInput.value.length;
+        });
+
+        // Forge button
+        forgeBtn.addEventListener('click', async () => {
+            const prompt = promptInput.value.trim();
+            
+            if (prompt.length < 20) {
+                alert('Please enter at least 20 characters to describe your game!');
+                return;
+            }
+
+            // Check for God Mode
+            if (prompt.toLowerCase() === 'ghostmode.pokeforge') {
+                activateGodMode();
+                return;
+            }
+
+            // Start generation
+            await generateGame(prompt);
+        });
+
+        // Enter key to forge
+        promptInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                forgeBtn.click();
+            }
+        });
+
+        // ==================== LOADING STAGES ====================
+        function updateLoadingStage(stageNum) {
+            for (let i = 1; i <= 5; i++) {
+                const stage = document.getElementById(`stage-${i}`);
+                if (i < stageNum) {
+                    stage.className = 'stage complete';
+                } else if (i === stageNum) {
+                    stage.className = 'stage active';
+                } else {
+                    stage.className = 'stage';
+                }
+            }
+        }
+
+        // ==================== AI GAME GENERATION ====================
+        async function generateGame(prompt) {
+            loadingOverlay.classList.add('active');
+            forgeBtn.disabled = true;
+
+            try {
+                // Stage 1: Channeling
+                updateLoadingStage(1);
+                await sleep(800);
+
+                // Stage 2: Summoning creatures
+                updateLoadingStage(2);
+                await sleep(800);
+
+                // Generate game data using AI simulation
+                const gameData = await generateGameWorld(prompt);
+
+                // Stage 3: Building world
+                updateLoadingStage(3);
+                await sleep(800);
+
+                // Stage 4: Training AI
+                updateLoadingStage(4);
+                await sleep(800);
+
+                // Stage 5: Ready
+                updateLoadingStage(5);
+                await sleep(600);
+
+                // Start the game
+                state.gameData = gameData;
+                startGame(gameData);
+
+            } catch (error) {
+                console.error('Generation failed:', error);
+                alert('Failed to generate game. Please try again!');
+            } finally {
+                loadingOverlay.classList.remove('active');
+                forgeBtn.disabled = false;
+            }
+        }
+
+        // ==================== GAME WORLD GENERATION ====================
+        async function generateGameWorld(prompt) {
+            // Parse the prompt to extract key elements
+            const lowerPrompt = prompt.toLowerCase();
+            
+            // Detect setting
+            let setting = 'a fantasy region';
+            if (lowerPrompt.includes('miami') || lowerPrompt.includes('florida')) setting = 'Miami, Florida';
+            else if (lowerPrompt.includes('japan') || lowerPrompt.includes('japanese')) setting = 'Japan';
+            else if (lowerPrompt.includes('mars') || lowerPrompt.includes('space')) setting = 'Mars';
+            else if (lowerPrompt.includes('underwater') || lowerPrompt.includes('ocean')) setting = 'an underwater kingdom';
+            else if (lowerPrompt.includes('medieval') || lowerPrompt.includes('fantasy')) setting = 'a medieval fantasy world';
+            else if (lowerPrompt.includes('apocalyptic') || lowerPrompt.includes('post-apocalyptic')) setting = 'a post-apocalyptic wasteland';
+
+            // Detect starters
+            let starters = [
+                { name: 'Aquon', type: 'water', description: 'A small aquatic creature' },
+                { name: 'Flamby', type: 'fire', description: 'A fiery small creature' },
+                { name: 'Leafix', type: 'grass', description: 'A leafy plant creature' }
+            ];
+
+            if (lowerPrompt.includes('alligator') || lowerPrompt.includes('crocodile')) {
+                starters[0] = { name: 'Gatoroo', type: 'water', description: 'A baby alligator with powerful jaws' };
+            }
+            if (lowerPrompt.includes('flamingo')) {
+                starters[1] = { name: 'Flameling', type: 'fire', description: 'A pink flamingo with fiery feathers' };
+            }
+            if (lowerPrompt.includes('manatee')) {
+                starters[2] = { name: 'Manatee', type: 'grass', description: 'A gentle sea cow creature' };
+            }
+
+            // Generate world data
+            const gameData = {
+                title: `Adventure in ${setting}`,
+                setting: setting,
+                region: generateRegionName(setting),
+                starters: starters,
+                towns: generateTowns(setting),
+                gyms: generateGyms(setting),
+                rival: generateRival(),
+                storyline: generateStoryline(),
+                npcs: generateNPCs(),
+                wildCreatures: generateWildCreatures(starters),
+                mapLayout: generateMapLayout()
+            };
+
+            return gameData;
+        }
+
+        function generateRegionName(setting) {
+            const names = {
+                'Miami, Florida': 'Tropica Region',
+                'Japan': 'Sakura Region',
+                'Mars': 'Red Planet Region',
+                'an underwater kingdom': 'Oceanic Region',
+                'a medieval fantasy world': 'Eldoria Region',
+                'a post-apocalyptic wasteland': 'Wasteland Region',
+                'a fantasy region': 'Mystara Region'
+            };
+            return names[setting] || 'Mystara Region';
+        }
+
+        function generateTowns(setting) {
+            const townNames = {
+                'Miami, Florida': ['South Beach', 'Coral Gables', 'Key Largo', 'Everglades City', 'Miami Bay'],
+                'Japan': ['Cherry Valley', 'Bamboo Heights', 'Temple Town', 'Harbor City', 'Mountain Vista'],
+                'Mars': ['Red Base', 'Olympus City', 'Crater Town', 'Station Alpha', 'Valley of Mars'],
+                'an underwater kingdom': ['Coral City', 'Pearl Port', 'Kelp Village', 'Trench Town', 'Reef Haven'],
+                'a medieval fantasy world': ['Castle Town', 'Dragon\'s Rest', 'Knight\'s Village', 'Wizard\'s Spire', 'Forest Haven'],
+                'a post-apocalyptic wasteland': ['Rust City', 'Bunker Town', 'Ruin Heights', 'Ash Valley', 'Haven Settlement'],
+                'a fantasy region': ['Oak Town', 'River City', 'Mountain Peak', 'Lake Shore', 'Forest Glen']
+            };
+            return townNames[setting] || townNames['a fantasy region'];
+        }
+
+        function generateGyms(setting) {
+            const gymThemes = {
+                'Miami, Florida': ['Beach', 'Swamp', 'Club', 'Art Deco', 'Sports', 'Pool'],
+                'Japan': ['Cherry Blossom', 'Temple', 'Garden', 'Samurai', 'Onsen', 'Festival'],
+                'Mars': ['Volcanic', 'Dusty', 'Tech', 'Crystal', 'Gravity', 'Red Stone'],
+                'an underwater kingdom': ['Coral', 'Pearl', 'Tidal', 'Storm', 'Deep Sea', 'Reef'],
+                'a medieval fantasy world': ['Fire Dungeon', 'Ice Castle', 'Dragon Lair', 'Knight Hall', 'Wizard Tower', 'Forest Maze'],
+                'a post-apocalyptic wasteland': ['Scrap Metal', 'Radiation', 'Bunker', 'Ruin', 'Wasteland', 'Tech'],
+                'a fantasy region': ['Grass', 'Fire', 'Water', 'Electric', 'Ice', 'Psychic']
+            };
+            
+            const themes = gymThemes[setting] || gymThemes['a fantasy region'];
+            return themes.map((theme, i) => ({
+                name: `${theme} Gym`,
+                leader: `Leader ${['Blaze', 'Tide', 'Spark', 'Frost', 'Shadow', 'Light'][i]}`,
+                type: ['fire', 'water', 'electric', 'ice', 'psychic', 'dragon'][i],
+                badge: `${theme} Badge`
+            }));
+        }
+
+        function generateRival() {
+            const names = ['Alex', 'Jordan', 'Casey', 'Riley', 'Morgan'];
+            const personalities = ['aggressive', 'friendly', 'mysterious', 'competitive', 'cheerful'];
+            return {
+                name: names[Math.floor(Math.random() * names.length)],
+                personality: personalities[Math.floor(Math.random() * personalities.length)],
+                starter: null // Will be set opposite to player's choice
+            };
+        }
+
+        function generateStoryline() {
+            return [
+                'Your journey begins when you receive your first creature from the Professor.',
+                'Your rival challenges you to a battle to test your skills.',
+                'You must travel across the region, defeating gym leaders to earn badges.',
+                'An evil team threatens the region — you must stop them!',
+                'Finally, face the Champion in the ultimate battle!'
+            ];
+        }
+
+        function generateNPCs() {
+            return [
+                { name: 'Professor Oakwell', role: 'Professor', location: 'Lab', dialogue: 'Welcome, young trainer! The world of creatures awaits you!' },
+                { name: 'Youngster Joey', role: 'Trainer', location: 'Route 1', dialogue: 'I just caught a super rare creature! Wanna see?' },
+                { name: 'Lass Sara', role: 'Trainer', location: 'Route 2', dialogue: 'I\'ve been training really hard!' },
+                { name: 'Bug Catcher Cole', role: 'Trainer', location: 'Forest', dialogue: 'These bugs are tough!' },
+                { name: 'Hiker Marcus', role: 'Trainer', location: 'Mountain', dialogue: 'The view from here is amazing!' },
+                { name: 'Beauty Victoria', role: 'Trainer', location: 'Beach', dialogue: 'I love creatures that shine!' },
+                { name: 'Rocker Derek', role: 'Trainer', location: 'City', dialogue: 'Music and creatures — best combo!' },
+                { name: 'Gentleman Edgar', role: 'Elite', location: 'Mansion', dialogue: 'I\'ve been studying creatures for decades.' }
+            ];
+        }
+
+        function generateWildCreatures(starters) {
+            const types = ['normal', 'bug', 'flying', 'ground', 'rock', 'ghost'];
+            return types.map((type, i) => ({
+                name: `Wild${type.charAt(0).toUpperCase() + type.slice(1)}`,
+                type: type,
+                level: 3 + i * 2,
+                hp: 20 + i * 10,
+                moves: ['Tackle', 'Growl']
+            }));
+        }
+
+        function generateMapLayout() {
+            return {
+                width: 1600,
+                height: 1200,
+                tiles: []
+            };
+        }
+
+        // ==================== PHASER GAME ====================
+        function startGame(gameData) {
+            // Hide hero, show game
+            document.querySelector('header').style.display = 'none';
+            document.querySelector('.hero').style.display = 'none';
+            document.querySelector('footer').style.display = 'none';
+            gameContainer.classList.add('active');
+            gameUI.classList.add('active');
+
+            // Initialize Phaser game
+            initPhaserGame(gameData);
+        }
+
+        function initPhaserGame(gameData) {
+            const config = {
+                type: Phaser.AUTO,
+                parent: 'game-canvas',
+                width: window.innerWidth,
+                height: window.innerHeight,
+                backgroundColor: '#1a1a2e',
+                scene: {
+                    preload: preload,
+                    create: create,
+                    update: update
+                },
+                physics: {
+                    default: 'arcade',
+                    arcade: {
+                        gravity: { y: 0 },
+                        debug: false
+                    }
+                }
+            };
+
+            state.game = new Phaser.Game(config);
+
+            function preload() {
+                // Create procedural graphics instead of loading images
+            }
+
+            function create() {
+                // Set up game scene
+                this.cameras.main.setBackgroundColor('#1a1a2e');
+                
+                // Create world bounds
+                this.physics.world.setBounds(0, 0, gameData.mapLayout.width, gameData.mapLayout.height);
+                
+                // Draw grass tiles (procedural background)
+                const graphics = this.add.graphics();
+                
+                // Create grass pattern
+                for (let x = 0; x < gameData.mapLayout.width; x += 32) {
+                    for (let y = 0; y < gameData.mapLayout.height; y += 32) {
+                        const shade = Math.random() > 0.5 ? 0x2d5a27 : 0x3d6a37;
+                        graphics.fillStyle(shade, 1);
+                        graphics.fillRect(x, y, 32, 32);
+                    }
+                }
+
+                // Add some decoration - trees, buildings
+                const decorGraphics = this.add.graphics();
+                
+                // Add trees in random positions
+                for (let i = 0; i < 50; i++) {
+                    const x = 50 + Math.random() * (gameData.mapLayout.width - 100);
+                    const y = 50 + Math.random() * (gameData.mapLayout.height - 100);
+                    
+                    // Tree trunk
+                    decorGraphics.fillStyle(0x5d4037, 1);
+                    decorGraphics.fillRect(x + 12, y + 20, 8, 20);
+                    
+                    // Tree top
+                    decorGraphics.fillStyle(0x2e7d32, 1);
+                    decorGraphics.fillCircle(x + 16, y + 16, 16);
+                }
+
+                // Add towns/buildings
+                const townColors = [0x5c6bc0, 0x7e57c2, 0x26a69a, 0xef5350, 0xffa726];
+                gameData.towns.forEach((town, i) => {
+                    const x = 100 + (i * 250) % (gameData.mapLayout.width - 200);
+                    const y = 100 + Math.floor(i / 4) * 200;
+                    
+                    // Building
+                    decorGraphics.fillStyle(townColors[i % townColors.length], 1);
+                    decorGraphics.fillRect(x, y, 60, 40);
+                    
+                    // Roof
+                    decorGraphics.fillStyle(0x37474f, 1);
+                    decorGraphics.fillTriangle(x - 5, y, x + 30, y - 20, x + 65, y);
+                    
+                    // Town name
+                    this.add.text(x + 5, y - 35, town, {
+                        fontFamily: 'Orbitron',
+                        fontSize: '12px',
+                        color: '#ffffff'
+                    });
+                });
+
+                // Add path/routes
+                const pathGraphics = this.add.graphics();
+                pathGraphics.lineStyle(20, 0x8d6e63, 1);
+                
+                // Connect towns with paths
+                for (let i = 0; i < gameData.towns.length - 1; i++) {
+                    const x1 = 100 + (i * 250) % (gameData.mapLayout.width - 200);
+                    const y1 = 100 + Math.floor(i / 4) * 200 + 20;
+                    const x2 = 100 + ((i + 1) * 250) % (gameData.mapLayout.width - 200);
+                    const y2 = 100 + Math.floor((i + 1) / 4) * 200 + 20;
+                    
+                    pathGraphics.beginPath();
+                    pathGraphics.moveTo(x1 + 30, y1);
+                    pathGraphics.lineTo(x2 + 30, y2);
+                    pathGraphics.strokePath();
+                }
+
+                // Create player
+                state.player = this.physics.add.sprite(state.playerPosition.x, state.playerPosition.y, 'player');
+                state.player.setCollideWorldBounds(true);
+                
+                // Create player graphics
+                const playerGraphics = this.add.graphics();
+                playerGraphics.fillStyle(0xff6b35, 1);
+                playerGraphics.fillCircle(16, 14, 10);
+                playerGraphics.fillStyle(0xf5deb3, 1);
+                playerGraphics.fillRect(10, 24, 12, 10);
+
+                // Player sprite texture
+                const playerTexture = this.make.graphics({ x: 0, y: 0, add: false });
+                playerTexture.fillStyle(0xff6b35, 1);
+                playerTexture.fillCircle(16, 14, 12);
+                playerTexture.fillStyle(0x1a237e, 1);
+                playerTexture.fillRect(10, 26, 12, 10);
+                playerTexture.generateTexture('player', 32, 40);
+                
+                // Create NPC sprites
+                state.npcs = [];
+                gameData.npcs.forEach((npc, i) => {
+                    const x = 200 + (i * 100) % 600;
+                    const y = 200 + (i * 80) % 400;
+                    
+                    const npcSprite = this.physics.add.sprite(x, y, 'npc');
+                    npcSprite.setImmovable(true);
+                    
+                    // NPC graphics
+                    const npcTexture = this.make.graphics({ x: 0, y: 0, add: false });
+                    const colors = [0x00d4aa, 0xa855f7, 0xff6b35, 0x5c6bc0, 0xef5350];
+                    npcTexture.fillStyle(colors[i % colors.length], 1);
+                    npcTexture.fillCircle(16, 14, 10);
+                    npcTexture.fillStyle(0x424242, 1);
+                    npcTexture.fillRect(8, 24, 16, 12);
+                    npcTexture.generateTexture(`npc${i}`, 32, 40);
+                    
+                    npcSprite.setTexture(`npc${i}`);
+                    
+                    // Add collision
+                    this.physics.add.overlap(state.player, npcSprite, () => {
+                        showDialogue(npc.name, npc.dialogue, npc);
+                    });
+                    
+                    state.npcs.push({
+                        sprite: npcSprite,
+                        data: npc
+                    });
+                });
+
+                // Camera follows player
+                this.cameras.main.startFollow(state.player, true, 0.08, 0.08);
+                this.cameras.main.setZoom(1.5);
+
+                // Controls
+                this.cursors = this.input.keyboard.createCursorKeys();
+                this.wasd = this.input.keyboard.addKeys({
+                    up: Phaser.Input.Keyboard.KeyCodes.W,
+                    down: Phaser.Input.Keyboard.KeyCodes.S,
+                    left: Phaser.Input.Keyboard.KeyCodes.A,
+                    right: Phaser.Input.Keyboard.KeyCodes.D
+                });
+
+                // Wild creature encounters
+                this.physics.add.overlap(state.player, createWildEncounterZones(this, gameData.wildCreatures), () => {
+                    startWildBattle(this, gameData.wildCreatures[Math.floor(Math.random() * gameData.wildCreatures.length)]);
+                });
+
+                // UI - Player info
+                const uiContainer = this.add.container(20, 20);
+                
+                // Starter selection UI
+                showStarterSelection(this, gameData.starters);
+            }
+
+            function update() {
+                if (!state.player) return;
+
+                const speed = 160;
+                state.player.setVelocity(0);
+
+                if (this.cursors.left.isDown || this.wasd.left.isDown) {
+                    state.player.setVelocityX(-speed);
+                } else if (this.cursors.right.isDown || this.wasd.right.isDown) {
+                    state.player.setVelocityX(speed);
+                }
+
+                if (this.cursors.up.isDown || this.wasd.up.isDown) {
+                    state.player.setVelocityY(-speed);
+                } else if (this.cursors.down.isDown || this.wasd.down.isDown) {
+                    state.player.setVelocityY(speed);
+                }
+
+                // Update player position state
+                state.playerPosition.x = state.player.x;
+                state.playerPosition.y = state.player.y;
+            }
+
+            // Create wild encounter zones
+            function createWildEncounterZones(scene, creatures) {
+                const zones = scene.physics.add.group();
+                
+                for (let i = 0; i < 20; i++) {
+                    const x = 100 + Math.random() * (gameData.mapLayout.width - 200);
+                    const y = 100 + Math.random() * (gameData.mapLayout.height - 200);
+                    
+                    const zone = scene.add.circle(x, y, 30, 0x00ff00, 0.1);
+                    scene.physics.add.existing(zone);
+                    zones.add(zone);
+                }
+                
+                return zones;
+            }
+
+            // Show starter selection
+            function showStarterSelection(scene, starters) {
+                // Create starter selection UI
+                const modal = document.createElement('div');
+                modal.id = 'starter-modal';
+                modal.style.cssText = `
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: rgba(18, 18, 26, 0.98);
+                    border: 2px solid #ff6b35;
+                    border-radius: 20px;
+                    padding: 40px;
+                    z-index: 200;
+                    text-align: center;
+                    max-width: 500px;
+                    box-shadow: 0 0 50px rgba(255, 107, 53, 0.3);
+                `;
+                
+                modal.innerHTML = `
+                    <h2 style="font-family: Orbitron; color: #ff6b35; margin-bottom: 24px;">Choose Your Starter!</h2>
+                    <div style="display: flex; gap: 20px; justify-content: center; flex-wrap: wrap;">
+                        ${starters.map((starter, i) => `
+                            <div class="starter-option" data-index="${i}" style="
+                                background: rgba(255,255,255,0.05);
+                                border: 2px solid ${['#00d4aa', '#ff6b35', '#4caf50'][i]};
+                                border-radius: 16px;
+                                padding: 20px;
+                                cursor: pointer;
+                                transition: all 0.3s;
+                                min-width: 120px;
+                            ">
+                                <div style="font-size: 40px; margin-bottom: 12px;">
+                                    ${['💧', '🔥', '🌿'][i]}
+                                </div>
+                                <div style="font-family: Orbitron; color: ${['#00d4aa', '#ff6b35', '#4caf50'][i]}; font-weight: bold;">
+                                    ${starter.name}
+                                </div>
+                                <div style="font-size: 12px; color: #888; margin-top: 8px;">
+                                    ${starter.type}
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                
+                // Add click handlers
+                document.querySelectorAll('.starter-option').forEach(option => {
+                    option.addEventListener('click', () => {
+                        const index = parseInt(option.dataset.index);
+                        state.playerParty = [{
+                            ...starters[index],
+                            level: 5,
+                            hp: 30,
+                            maxHp: 30,
+                            moves: ['Tackle', 'Growl', 'Ember', 'Water Gun', 'Vine Whip'].slice(0, 3)
+                        }];
+                        modal.remove();
+                        showMessage(scene, `You chose ${starters[index].name}! Your adventure begins!`);
+                    });
+                    
+                    option.addEventListener('mouseenter', () => {
+                        option.style.transform = 'scale(1.05)';
+                    });
+                    option.addEventListener('mouseleave', () => {
+                        option.style.transform = 'scale(1)';
+                    });
+                });
+            }
+
+            // Show message
+            function showMessage(scene, text) {
+                const msg = scene.add.text(
+                    scene.cameras.main.centerX,
+                    scene.cameras.main.centerY,
+                    text,
+                    {
+                        fontFamily: 'Exo 2',
+                        fontSize: '24px',
+                        color: '#ffffff',
+                        backgroundColor: 'rgba(0,0,0,0.8)',
+                        padding: { x: 20, y: 10 },
+                        borderRadius: 10
+                    }
+                );
+                msg.setOrigin(0.5);
+                
+                scene.tweens.add({
+                    targets: msg,
+                    alpha: 0,
+                    duration: 3000,
+                    delay: 2000,
+                    onComplete: () => msg.destroy()
+                });
+            }
+
+            // Wild battle
+            function startWildBattle(scene, creature) {
+                if (state.currentBattle) return;
+                
+                state.currentBattle = true;
+                
+                const battleCreature = {
+                    ...creature,
+                    hp: creature.hp,
+                    maxHp: creature.hp
+                };
+                
+                showBattle(scene, state.playerParty[0], battleCreature);
+            }
+
+            // Battle system
+            function showBattle(scene, playerCreature, enemyCreature) {
+                const battleModal = document.createElement('div');
+                battleModal.id = 'battle-modal';
+                battleModal.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(10, 10, 15, 0.95);
+                    z-index: 300;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                `;
+                
+                battleModal.innerHTML = `
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <div style="font-size: 60px; margin-bottom: 10px;">${getCreatureEmoji(playerCreature.type)}</div>
+                        <div style="font-family: Orbitron; font-size: 24px; color: #00d4aa;">${playerCreature.name}</div>
+                        <div style="color: #888;">HP: <span id="player-hp">${playerCreature.hp}</span>/${playerCreature.maxHp}</div>
+                    </div>
+                    <div style="font-size: 40px; margin: 20px 0;">VS</div>
+                    <div style="text-align: center; margin-bottom: 30px;">
+                        <div style="font-size: 60px; margin-bottom: 10px;">${getCreatureEmoji(enemyCreature.type)}</div>
+                        <div style="font-family: Orbitron; font-size: 24px; color: #ff6b35;">${enemyCreature.name}</div>
+                        <div style="color: #888;">HP: <span id="enemy-hp">${enemyCreature.hp}</span>/${enemyCreature.maxHp}</div>
+                    </div>
+                    <div id="battle-log" style="
+                        background: rgba(0,0,0,0.5);
+                        padding: 15px;
+                        border-radius: 10px;
+                        margin-bottom: 20px;
+                        min-height: 60px;
+                        min-width: 300px;
+                        text-align: center;
+                        color: #fff;
+                    ">
+                        A wild ${enemyCreature.name} appeared!
+                    </div>
+                    <div style="display: flex; gap: 15px; flex-wrap: wrap; justify-content: center;">
+                        ${(playerCreature.moves || ['Tackle', 'Ember', 'Water Gun', 'Thunder Shock']).slice(0, 4).map((move, i) => `
+                            <button class="battle-btn" data-move="${move}" style="
+                                padding: 15px 30px;
+                                font-family: Exo 2;
+                                font-size: 16px;
+                                font-weight: 600;
+                                background: linear-gradient(135deg, #ff6b35, #ff8f35);
+                                border: none;
+                                border-radius: 10px;
+                                color: white;
+                                cursor: pointer;
+                                transition: all 0.3s;
+                            ">${move}</button>
+                        `).join('')}
+                        <button class="battle-btn" id="run-btn" style="
+                            padding: 15px 30px;
+                            font-family: Exo 2;
+                            font-size: 16px;
+                            background: #424242;
+                            border: none;
+                            border-radius: 10px;
+                            color: white;
+                            cursor: pointer;
+                        ">Run</button>
+                    </div>
+                `;
+                
+                document.body.appendChild(battleModal);
+                
+                // Battle logic
+                let battleState = { player: playerCreature, enemy: enemyCreature };
+                
+                document.querySelectorAll('.battle-btn[data-move]').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const move = btn.dataset.move;
+                        
+                        // Player attacks
+                        const damage = Math.floor(Math.random() * 10) + 5;
+                        battleState.enemy.hp = Math.max(0, battleState.enemy.hp - damage);
+                        document.getElementById('enemy-hp').textContent = battleState.enemy.hp;
+                        document.getElementById('battle-log').textContent = `${playerCreature.name} used ${move}! ${damage} damage!`;
+                        
+                        await sleep(1000);
+                        
+                        if (battleState.enemy.hp <= 0) {
+                            document.getElementById('battle-log').textContent = `You won! +50 XP!`;
+                            await sleep(1500);
+                            battleModal.remove();
+                            state.currentBattle = null;
+                            return;
+                        }
+                        
+                        // Enemy attacks
+                        const enemyDamage = Math.floor(Math.random() * 8) + 3;
+                        battleState.player.hp = Math.max(0, battleState.player.hp - enemyDamage);
+                        document.getElementById('player-hp').textContent = battleState.player.hp;
+                        document.getElementById('battle-log').textContent = `${enemyCreature.name} attacked! ${enemyDamage} damage!`;
+                        
+                        await sleep(1000);
+                        
+                        if (battleState.player.hp <= 0) {
+                            document.getElementById('battle-log').textContent = `You fainted! Recover at a Pokémon Center!`;
+                            await sleep(1500);
+                            battleModal.remove();
+                            state.currentBattle = null;
+                            state.playerParty[0].hp = Math.floor(state.playerParty[0].maxHp / 2);
+                        }
+                    });
+                });
+                
+                document.getElementById('run-btn').addEventListener('click', () => {
+                    document.getElementById('battle-log').textContent = `Got away safely!`;
+                    setTimeout(() => {
+                        battleModal.remove();
+                        state.currentBattle = null;
+                    }, 1000);
+                });
+            }
+        }
+
+        function getCreatureEmoji(type) {
+            const emojis = {
+                fire: '🔥',
+                water: '💧',
+                grass: '🌿',
+                electric: '⚡',
+                ice: '❄️',
+                psychic: '🔮',
+                ghost: '👻',
+                dragon: '🐉',
+                normal: '🐾',
+                bug: '🐛',
+                flying: '🦅',
+                ground: '🪨',
+                rock: '🪨'
+            };
+            return emojis[type] || '✨';
+        }
+
+        // ==================== DIALOGUE SYSTEM ====================
+        function showDialogue(speaker, text, npcData) {
+            const dialogueBox = document.getElementById('dialogue-box');
+            const dialogueSpeaker = document.getElementById('dialogue-speaker');
+            const dialogueText = document.getElementById('dialogue-text');
+            
+            dialogueSpeaker.textContent = speaker;
+            
+            // Simulate AI response - in production this would call the LLM
+            const responses = [
+                "Welcome, traveler! Good luck on your journey!",
+                "The region is beautiful this time of year, isn't it?",
+                "I heard there's a powerful creature in the mountains...",
+                "Have you visited all the towns yet?",
+                "The gym leaders here are incredibly strong!",
+                "Be careful on your adventures!",
+                "I believe in you, trainer!",
+                "The legend says there's a secret hidden in this world..."
+            ];
+            
+            dialogueText.textContent = text || responses[Math.floor(Math.random() * responses.length)];
+            dialogueBox.classList.add('active');
+            
+            // Close button
+            document.getElementById('dialogue-close').onclick = () => {
+                dialogueBox.classList.remove('active');
+            };
+        }
+
+        // ==================== GOD MODE ====================
+        function activateGodMode() {
+            state.godMode = true;
+            
+            // Show overlay
+            loadingOverlay.classList.remove('active');
+            godModeOverlay.classList.add('active');
+            
+            setTimeout(() => {
+                godModeOverlay.classList.remove('active');
+                godModePanel.classList.add('active');
+            }, 2000);
+            
+            // Genre selection
+            document.querySelectorAll('.genre-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const genre = btn.dataset.genre;
+                    godModePanel.classList.remove('active');
+                    
+                    // Generate God Mode game
+                    generateGodModeGame(genre);
+                });
+            });
+        }
+
+        async function generateGodModeGame(genre) {
+            loadingOverlay.classList.add('active');
+            forgeBtn.disabled = true;
+            
+            updateLoadingStage(1);
+            await sleep(600);
+            updateLoadingStage(2);
+            await sleep(600);
+            updateLoadingStage(3);
+            await sleep(600);
+            updateLoadingStage(4);
+            await sleep(600);
+            updateLoadingStage(5);
+            await sleep(400);
+            
+            // Generate game based on genre
+            const gameData = {
+                title: `God Mode: ${genre.charAt(0).toUpperCase() + genre.slice(1)}`,
+                setting: 'Your World',
+                region: 'Custom World',
+                genre: genre,
+                starters: [{ name: 'Hero', type: 'normal', description: 'You' }],
+                towns: ['Home Town', 'Battle Arena', 'Shop Town', 'Mystery Dungeon'],
+                gyms: [],
+                npcs: [],
+                wildCreatures: [],
+                mapLayout: { width: 1600, height: 1200 }
+            };
+            
+            state.gameData = gameData;
+            startGame(gameData);
+            
+            loadingOverlay.classList.remove('active');
+            forgeBtn.disabled = false;
+        }
+
+        // ==================== GAME UI ====================
+        document.getElementById('exit-btn').addEventListener('click', exitGame);
+        document.getElementById('save-btn').addEventListener('click', saveGame);
+
+        function exitGame() {
+            if (state.game) {
+                state.game.destroy();
+                state.game = null;
+            }
+            
+            gameContainer.classList.remove('active');
+            gameUI.classList.remove('active');
+            
+            // Show hero again
+            document.querySelector('header').style.display = 'block';
+            document.querySelector('.hero').style.display = 'block';
+            document.querySelector('footer').style.display = 'block';
+            
+            // Reset state
+            state.playerParty = [];
+            state.currentBattle = null;
+            state.playerPosition = { x: 400, y: 300 };
+        }
+
+        function saveGame() {
+            const saveData = {
+                position: state.playerPosition,
+                party: state.playerParty,
+                inventory: state.playerInventory
+            };
+            localStorage.setItem('pokeforge_save', JSON.stringify(saveData));
+            alert('Game saved!');
+        }
+
+        // ==================== UTILITIES ====================
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // ==================== INITIALIZATION ====================
+        createParticles();
+
+        // Set current year in footer
+        document.getElementById('year').textContent = new Date().getFullYear();
+    </script>
+</body>
+</html>
