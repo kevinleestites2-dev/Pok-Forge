@@ -52,25 +52,36 @@
         /* SPRITE RUNNER STRIP */
         #sprite-strip {
             position: fixed;
-            bottom: 72px;
-            left: 0; right: 0;
-            height: 56px;
+            inset: 0;
             pointer-events: none;
             z-index: 2;
             overflow: hidden;
         }
         .runner {
             position: absolute;
-            bottom: 0;
+            bottom: 72px;
             font-size: 28px;
             animation: runAcross var(--spd) linear infinite;
             animation-delay: var(--delay);
             filter: drop-shadow(0 0 8px var(--clr));
+            cursor: grab;
+            pointer-events: all;
+            touch-action: none;
+            user-select: none;
+            transition: filter .15s;
+        }
+        .runner.dragging {
+            animation-play-state: paused;
+            cursor: grabbing;
+            filter: drop-shadow(0 0 18px var(--clr)) brightness(1.4);
+            z-index: 999;
+            animation: none !important;
         }
         .runner img {
-            width: 48px;
-            height: 48px;
+            width: 52px;
+            height: 52px;
             image-rendering: pixelated;
+            display: block;
         }
         @keyframes runAcross {
             0%   { left: -60px; }
@@ -542,29 +553,80 @@ document.getElementById('yr').textContent = new Date().getFullYear();
   }
 })();
 
-// Sprite runners
+// Sprite runners with drag
 (function(){
   const strip=document.getElementById('sprite-strip');
   const sprites=[
-    {img:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png',  clr:'#ffd700',spd:'11s',delay:'0s'},   // Pikachu
-    {img:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/6.png',   clr:'#ff4500',spd:'9s', delay:'2s'},   // Charizard
-    {img:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png',   clr:'#4caf50',spd:'18s',delay:'5s'},   // Bulbasaur
-    {img:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/4.png',   clr:'#ff6b35',spd:'14s',delay:'1s'},   // Charmander
-    {img:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/7.png',   clr:'#00d4aa',spd:'20s',delay:'7s'},   // Squirtle
-    {img:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/133.png', clr:'#ffd700',spd:'13s',delay:'3.5s'}, // Eevee
-    {img:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/39.png',  clr:'#ff9ec8',spd:'22s',delay:'9s'},   // Jigglypuff
-    {img:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/143.png', clr:'#a0c8ff',spd:'25s',delay:'6s'},   // Snorlax
+    {img:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png',  clr:'#ffd700',spd:'11s',delay:'0s'},
+    {img:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/6.png',   clr:'#ff4500',spd:'9s', delay:'2s'},
+    {img:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png',   clr:'#4caf50',spd:'18s',delay:'5s'},
+    {img:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/4.png',   clr:'#ff6b35',spd:'14s',delay:'1s'},
+    {img:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/7.png',   clr:'#00d4aa',spd:'20s',delay:'7s'},
+    {img:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/133.png', clr:'#ffd700',spd:'13s',delay:'3.5s'},
+    {img:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/39.png',  clr:'#ff9ec8',spd:'22s',delay:'9s'},
+    {img:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/143.png', clr:'#a0c8ff',spd:'25s',delay:'6s'},
   ];
+
   sprites.forEach(sp=>{
     const el=document.createElement('div');
     el.className='runner';
     const img=document.createElement('img');
-    img.src=sp.img;
-    img.alt='sprite';
+    img.src=sp.img; img.alt='sprite'; img.draggable=false;
     el.appendChild(img);
-    el.style.cssText=`--spd:${sp.spd};--delay:${sp.delay};--clr:${sp.clr};bottom:${4+Math.random()*10}px;`;
+    el.style.cssText=`--spd:${sp.spd};--delay:${sp.delay};--clr:${sp.clr};bottom:72px;`;
     strip.appendChild(el);
+    makeDraggable(el);
   });
+
+  function makeDraggable(el){
+    let dragging=false, startX=0, startY=0, elX=0, elY=0;
+
+    function getXY(e){ return e.touches ? {x:e.touches[0].clientX,y:e.touches[0].clientY} : {x:e.clientX,y:e.clientY}; }
+
+    function onStart(e){
+      e.preventDefault();
+      const pos=getXY(e);
+      const rect=el.getBoundingClientRect();
+      startX=pos.x - rect.left;
+      startY=pos.y - rect.top;
+      elX=rect.left; elY=rect.top;
+      dragging=true;
+      el.classList.add('dragging');
+      el.style.left=elX+'px';
+      el.style.top=elY+'px';
+      el.style.bottom='auto';
+    }
+
+    function onMove(e){
+      if(!dragging) return;
+      e.preventDefault();
+      const pos=getXY(e);
+      el.style.left=(pos.x - startX)+'px';
+      el.style.top=(pos.y - startY)+'px';
+    }
+
+    function onEnd(){
+      if(!dragging) return;
+      dragging=false;
+      el.classList.remove('dragging');
+      // Snap back to running strip
+      const curLeft=parseInt(el.style.left)||0;
+      el.style.removeProperty('top');
+      el.style.removeProperty('left');
+      el.style.bottom='72px';
+      // restart animation from roughly where we dropped it
+      const pct=Math.max(0,Math.min(curLeft/window.innerWidth,1));
+      const dur=parseFloat(el.style.getPropertyValue('--spd'))||12;
+      el.style.animationDelay=`-${pct*dur}s`;
+    }
+
+    el.addEventListener('mousedown', onStart);
+    el.addEventListener('touchstart', onStart, {passive:false});
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('touchmove', onMove, {passive:false});
+    document.addEventListener('mouseup', onEnd);
+    document.addEventListener('touchend', onEnd);
+  }
 })();
 
 // Logo sparks
