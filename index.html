@@ -535,14 +535,19 @@ function singNotes(x, y){
 }
 
 // ── COLLISION CHECK ──
+const colCooldown={};
 function checkCollisions(){
   const els=Array.from(document.querySelectorAll('.runner'));
+  const now=Date.now();
   for(let i=0;i<els.length;i++){
     for(let j=i+1;j<els.length;j++){
+      const key=els[i].dataset.id+'|'+els[j].dataset.id;
+      if(colCooldown[key] && now-colCooldown[key]<2000) continue; // 2s cooldown per pair
       const a=els[i].getBoundingClientRect(), b=els[j].getBoundingClientRect();
       const cx=Math.abs((a.left+a.width/2)-(b.left+b.width/2));
       const cy=Math.abs((a.top+a.height/2)-(b.top+b.height/2));
       if(cx<52 && cy<52){
+        colCooldown[key]=now;
         const mx=(a.left+b.left)/2, my=(a.top+b.top)/2;
         const dmg=Math.floor(Math.random()*15)+5;
         popup(mx, my-20, `-${dmg} HP!`, '#ff4500');
