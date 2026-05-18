@@ -370,12 +370,12 @@
 
 <main class="hero">
   <div class="wrap">
-    <h1>Create Your <span class="hl">Pokémon World</span></h1>
+    <h1>Create Your <span class="hl">Forge World</span></h1>
     <p>Describe your dream game and watch it come to life.<br>Any region. Any creatures. Any adventure — from your imagination.</p>
     <div class="prompt-wrap">
       <div class="prompt-ring"></div>
       <div class="prompt-inner">
-        <textarea id="prompt" maxlength="500" placeholder="A Pokémon game set in Miami where the starters are a baby alligator, a flamingo, and a manatee..."></textarea>
+        <textarea id="prompt" maxlength="500" placeholder="A creature-battle game set in Miami where the starters are a baby alligator, a flamingo, and a manatee..."></textarea>
         <div class="char-count"><span id="cc">0</span>/500</div>
       </div>
     </div>
@@ -385,7 +385,7 @@
 
 <footer>
   <div class="wrap">
-    <p>&copy; <span id="yr"></span> PokéForge. All rights reserved.</p>
+    <p>&copy; <span id="yr"></span> ForgeWorld. All rights reserved.</p>
     <p class="hint" title="Some secrets are worth finding...">There may or may not be a secret...</p>
   </div>
 </footer>
@@ -396,7 +396,7 @@
   <div class="loading-title">Forging Your World...</div>
   <div class="stages">
     <div class="stage" id="s1">Channeling inner spirit...</div>
-    <div class="stage" id="s2">Summoning creatures...</div>
+    <div class="stage" id="s2">Summoning your creatures...</div>
     <div class="stage" id="s3">Building world...</div>
     <div class="stage" id="s4">Training AI dialogue...</div>
     <div class="stage" id="s5">Almost ready...</div>
@@ -422,7 +422,7 @@
 </div>
 
 <script>
-console.log('%c The shadows whisper: ghostmode.pokeforge','color:#a855f7;font-size:14px;font-family:monospace;');
+console.log('%c The shadows whisper: ghostmode.pokeforge — find the key.','color:#a855f7;font-size:14px;font-family:monospace;');
 document.getElementById('yr').textContent = new Date().getFullYear();
 
 // ── AUDIO ENGINE (Web Audio API — no files needed) ──
@@ -578,26 +578,139 @@ function checkCollisions(){
 }
 setInterval(checkCollisions, 200);
 
-// ── SPRITE DATA ──
+// ── ORIGINAL CREATURES (100% in-house SVG — no external IP) ──
+const CREATURE_SVG = {
+  // Zappix — electric cloud fox
+  zappix: `<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="24" cy="30" rx="16" ry="12" fill="#ffd700"/>
+    <ellipse cx="24" cy="26" rx="12" ry="10" fill="#ffe55c"/>
+    <polygon points="12,20 8,10 16,18" fill="#ffd700"/>
+    <polygon points="36,20 40,10 32,18" fill="#ffd700"/>
+    <circle cx="19" cy="24" r="2.5" fill="#1a1a2e"/>
+    <circle cx="29" cy="24" r="2.5" fill="#1a1a2e"/>
+    <circle cx="19.8" cy="23.2" r="0.8" fill="#fff"/>
+    <circle cx="29.8" cy="23.2" r="0.8" fill="#fff"/>
+    <ellipse cx="24" cy="28" rx="3" ry="1.5" fill="#ff9ec8"/>
+    <path d="M14 32 Q24 38 34 32" stroke="#cc9900" stroke-width="1.5" fill="none"/>
+    <path d="M20 36 Q22 42 19 44" stroke="#ffd700" stroke-width="2" stroke-linecap="round"/>
+    <path d="M28 36 Q26 42 29 44" stroke="#ffd700" stroke-width="2" stroke-linecap="round"/>
+  </svg>`,
+  // Ignyx — fire lizard beast
+  ignyx: `<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="24" cy="32" rx="13" ry="11" fill="#cc3300"/>
+    <ellipse cx="24" cy="26" rx="11" ry="9" fill="#ff4500"/>
+    <polygon points="16,18 12,6 20,16" fill="#ff6b00"/>
+    <polygon points="32,18 36,6 28,16" fill="#ff6b00"/>
+    <circle cx="19.5" cy="24" r="2.5" fill="#1a1a2e"/>
+    <circle cx="28.5" cy="24" r="2.5" fill="#1a1a2e"/>
+    <circle cx="20.3" cy="23.2" r="0.8" fill="#ff4500"/>
+    <circle cx="29.3" cy="23.2" r="0.8" fill="#ff4500"/>
+    <ellipse cx="24" cy="29" rx="4" ry="2" fill="#ff8c55"/>
+    <path d="M11 35 Q24 42 37 35" stroke="#991f00" stroke-width="1.5" fill="none"/>
+    <path d="M34 28 Q42 24 40 18 Q36 22 35 18 Q33 26 34 28Z" fill="#ff4500" opacity="0.9"/>
+  </svg>`,
+  // Verdox — vine plant beast
+  verdox: `<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="24" cy="32" rx="14" ry="11" fill="#2d7a2d"/>
+    <ellipse cx="24" cy="26" rx="12" ry="10" fill="#4caf50"/>
+    <ellipse cx="14" cy="18" rx="7" ry="5" fill="#388e3c" transform="rotate(-30 14 18)"/>
+    <ellipse cx="34" cy="18" rx="7" ry="5" fill="#388e3c" transform="rotate(30 34 18)"/>
+    <circle cx="20" cy="24" r="2.5" fill="#1a1a2e"/>
+    <circle cx="28" cy="24" r="2.5" fill="#1a1a2e"/>
+    <circle cx="20.8" cy="23.2" r="0.8" fill="#66bb6a"/>
+    <circle cx="28.8" cy="23.2" r="0.8" fill="#66bb6a"/>
+    <ellipse cx="24" cy="29" rx="3" ry="1.5" fill="#a5d6a7"/>
+    <path d="M12 34 Q24 42 36 34" stroke="#1b5e20" stroke-width="1.5" fill="none"/>
+    <path d="M24 16 Q22 10 18 8" stroke="#4caf50" stroke-width="2" stroke-linecap="round"/>
+    <circle cx="17" cy="7" r="3" fill="#66bb6a"/>
+  </svg>`,
+  // Embrix — small ember critter
+  embrix: `<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="24" cy="32" rx="11" ry="10" fill="#cc4400"/>
+    <ellipse cx="24" cy="26" rx="10" ry="9" fill="#ff6b35"/>
+    <polygon points="18,18 16,10 22,17" fill="#ff8c00"/>
+    <polygon points="30,18 32,10 26,17" fill="#ff8c00"/>
+    <circle cx="20" cy="24" r="2.5" fill="#1a1a2e"/>
+    <circle cx="28" cy="24" r="2.5" fill="#1a1a2e"/>
+    <circle cx="20.8" cy="23.2" r="0.8" fill="#ff4500"/>
+    <circle cx="28.8" cy="23.2" r="0.8" fill="#ff4500"/>
+    <ellipse cx="24" cy="29" rx="3" ry="1.5" fill="#ffab76"/>
+    <path d="M13 34 Q24 41 35 34" stroke="#993300" stroke-width="1.5" fill="none"/>
+    <path d="M24 38 Q26 44 24 46 Q22 44 24 38Z" fill="#ff6b35"/>
+  </svg>`,
+  // Aquix — water shell beast
+  aquix: `<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="24" cy="33" rx="14" ry="10" fill="#007a6b"/>
+    <ellipse cx="24" cy="28" rx="12" ry="10" fill="#00d4aa"/>
+    <ellipse cx="24" cy="30" rx="9" ry="7" fill="#007a6b" opacity="0.4"/>
+    <circle cx="19.5" cy="25" r="2.5" fill="#1a1a2e"/>
+    <circle cx="28.5" cy="25" r="2.5" fill="#1a1a2e"/>
+    <circle cx="20.3" cy="24.2" r="0.8" fill="#00d4aa"/>
+    <circle cx="29.3" cy="24.2" r="0.8" fill="#00d4aa"/>
+    <ellipse cx="24" cy="30" rx="3" ry="1.5" fill="#80ffe8"/>
+    <path d="M12 36 Q24 43 36 36" stroke="#005c50" stroke-width="1.5" fill="none"/>
+    <ellipse cx="24" cy="19" rx="6" ry="4" fill="#00b894"/>
+    <path d="M10 26 Q7 22 9 18" stroke="#00d4aa" stroke-width="2" stroke-linecap="round"/>
+    <path d="M38 26 Q41 22 39 18" stroke="#00d4aa" stroke-width="2" stroke-linecap="round"/>
+  </svg>`,
+  // Swiftara — star wisp
+  swiftara: `<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <polygon points="24,6 27,18 39,18 29,26 33,38 24,30 15,38 19,26 9,18 21,18" fill="#ffd700" opacity="0.9"/>
+    <ellipse cx="24" cy="22" rx="7" ry="6" fill="#fff7cc"/>
+    <circle cx="21" cy="21" r="2" fill="#1a1a2e"/>
+    <circle cx="27" cy="21" r="2" fill="#1a1a2e"/>
+    <circle cx="21.6" cy="20.4" r="0.7" fill="#ffd700"/>
+    <circle cx="27.6" cy="20.4" r="0.7" fill="#ffd700"/>
+    <ellipse cx="24" cy="24" rx="2" ry="1" fill="#ffab00"/>
+  </svg>`,
+  // Lumora — singing moon sprite
+  lumora: `<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="24" cy="26" r="14" fill="#ff9ec8"/>
+    <circle cx="24" cy="26" r="11" fill="#ffcce0"/>
+    <circle cx="19.5" cy="23" r="2.5" fill="#1a1a2e"/>
+    <circle cx="28.5" cy="23" r="2.5" fill="#1a1a2e"/>
+    <circle cx="20.3" cy="22.2" r="0.8" fill="#ff9ec8"/>
+    <circle cx="29.3" cy="22.2" r="0.8" fill="#ff9ec8"/>
+    <path d="M18 30 Q24 35 30 30" stroke="#cc6699" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+    <ellipse cx="10" cy="22" rx="4" ry="3" fill="#ff9ec8"/>
+    <ellipse cx="38" cy="22" rx="4" ry="3" fill="#ff9ec8"/>
+    <circle cx="24" cy="14" r="4" fill="#ff9ec8" opacity="0.5"/>
+    <text x="24" y="11" text-anchor="middle" font-size="6" fill="#cc6699">♪</text>
+  </svg>`,
+  // Colossix — big sleepy boulder beast
+  colossix: `<svg width="52" height="52" viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="26" cy="36" rx="20" ry="13" fill="#6b8cba"/>
+    <ellipse cx="26" cy="28" rx="18" ry="16" fill="#a0c8ff"/>
+    <ellipse cx="26" cy="30" rx="13" ry="9" fill="#6b8cba" opacity="0.3"/>
+    <path d="M16 26 Q26 24 36 26" stroke="#fff" stroke-width="1" opacity="0.3"/>
+    <ellipse cx="20" cy="26" rx="3.5" ry="2.5" fill="#1a1a2e"/>
+    <ellipse cx="32" cy="26" rx="3.5" ry="2.5" fill="#1a1a2e"/>
+    <path d="M17 30 Q26 37 35 30" stroke="#4a6fa5" stroke-width="2" fill="none" stroke-linecap="round"/>
+    <text x="18" y="22" font-size="8" fill="#a0c8ff" opacity="0.8">Z</text>
+    <text x="22" y="16" font-size="6" fill="#a0c8ff" opacity="0.6">z</text>
+    <text x="26" y="12" font-size="4" fill="#a0c8ff" opacity="0.4">z</text>
+  </svg>`,
+};
+
+// ── CREATURE DATA ──
 const SPRITES=[
-  { id:'pikachu',    img:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png',  clr:'#ffd700', spd:11, name:'Pikachu',
-    onTap:(x,y)=>{ zapFlash(x,y); burst(x,y,'#ffd700',12); popup(x,y-30,'⚡ Thunderbolt!','#ffd700'); playZap(); } },
-  { id:'charizard',  img:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/6.png',   clr:'#ff4500', spd:9,  name:'Charizard',
-    onTap:(x,y)=>{ fireBreath(x,y); burst(x,y,'#ff4500',10); popup(x,y-30,'🔥 Flamethrower!','#ff4500'); playFire(); } },
-  { id:'bulbasaur',  img:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png',   clr:'#4caf50', spd:18, name:'Bulbasaur',
-    onTap:(x,y)=>{ burst(x,y,'#4caf50',8); popup(x,y-30,'🌿 Vine Whip!','#4caf50'); playBloop(); } },
-  { id:'charmander', img:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/4.png',   clr:'#ff6b35', spd:14, name:'Charmander',
+  { id:'zappix',   svg:CREATURE_SVG.zappix,   clr:'#ffd700', spd:11, name:'Zappix',
+    onTap:(x,y)=>{ zapFlash(x,y); burst(x,y,'#ffd700',12); popup(x,y-30,'⚡ Volt Strike!','#ffd700'); playZap(); } },
+  { id:'ignyx',    svg:CREATURE_SVG.ignyx,    clr:'#ff4500', spd:9,  name:'Ignyx',
+    onTap:(x,y)=>{ fireBreath(x,y); burst(x,y,'#ff4500',10); popup(x,y-30,'🔥 Inferno!','#ff4500'); playFire(); } },
+  { id:'verdox',   svg:CREATURE_SVG.verdox,   clr:'#4caf50', spd:18, name:'Verdox',
+    onTap:(x,y)=>{ burst(x,y,'#4caf50',8); popup(x,y-30,'🌿 Thorn Lash!','#4caf50'); playBloop(); } },
+  { id:'embrix',   svg:CREATURE_SVG.embrix,   clr:'#ff6b35', spd:14, name:'Embrix',
     onTap:(x,y)=>{ burst(x,y,'#ff6b35',8); popup(x,y-30,'🔥 Ember!','#ff6b35'); playFire(); } },
-  { id:'squirtle',   img:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/7.png',   clr:'#00d4aa', spd:20, name:'Squirtle',
-    onTap:(x,y)=>{ burst(x,y,'#00d4aa',8); popup(x,y-30,'💧 Water Gun!','#00d4aa'); playBloop(); } },
-  { id:'eevee',      img:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/133.png', clr:'#ffd700', spd:13, name:'Eevee',
-    onTap:(x,y)=>{ burst(x,y,'#ffd700',8); popup(x,y-30,'⭐ Swift!','#ffd700'); playCatch(); } },
-  { id:'jigglypuff', img:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/39.png',  clr:'#ff9ec8', spd:22, name:'Jigglypuff',
-    onTap:(x,y)=>{ singNotes(x,y); popup(x,y-30,'🎵 Sing!','#ff9ec8'); playNote();
-      // put nearby sprites to sleep
-      document.querySelectorAll('.runner').forEach(r=>{ if(r!==r) return; const rb=r.getBoundingClientRect(); if(Math.abs(rb.left-x)<150){ sleepZzz(rb.left,rb.top-20); } }); } },
-  { id:'snorlax',    img:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/143.png', clr:'#a0c8ff', spd:30, name:'Snorlax',
-    onTap:(x,y)=>{ sleepZzz(x,y); popup(x,y-30,'💤 Rest!','#a0c8ff'); playSnore(); } },
+  { id:'aquix',    svg:CREATURE_SVG.aquix,    clr:'#00d4aa', spd:20, name:'Aquix',
+    onTap:(x,y)=>{ burst(x,y,'#00d4aa',8); popup(x,y-30,'💧 Hydro Shot!','#00d4aa'); playBloop(); } },
+  { id:'swiftara', svg:CREATURE_SVG.swiftara, clr:'#ffd700', spd:13, name:'Swiftara',
+    onTap:(x,y)=>{ burst(x,y,'#ffd700',8); popup(x,y-30,'⭐ Star Rush!','#ffd700'); playCatch(); } },
+  { id:'lumora',   svg:CREATURE_SVG.lumora,   clr:'#ff9ec8', spd:22, name:'Lumora',
+    onTap:(x,y)=>{ singNotes(x,y); popup(x,y-30,'🎵 Moon Song!','#ff9ec8'); playNote();
+      document.querySelectorAll('.runner').forEach(r=>{ const rb=r.getBoundingClientRect(); if(Math.abs(rb.left-x)<150){ sleepZzz(rb.left,rb.top-20); } }); } },
+  { id:'colossix', svg:CREATURE_SVG.colossix, clr:'#a0c8ff', spd:30, name:'Colossix',
+    onTap:(x,y)=>{ sleepZzz(x,y); popup(x,y-30,'💤 Deep Rest!','#a0c8ff'); playSnore(); } },
 ];
 
 // ── BUILD SPRITES ──
@@ -610,9 +723,10 @@ SPRITES.forEach((sp,idx)=>{
   el.dataset.clr=sp.clr;
   el.style.setProperty('--clr', sp.clr);
 
-  const img=document.createElement('img');
-  img.src=sp.img; img.alt=sp.name; img.draggable=false;
-  el.appendChild(img);
+  const wrap=document.createElement('div');
+  wrap.style.cssText='width:48px;height:48px;display:flex;align-items:center;justify-content:center;';
+  wrap.innerHTML=sp.svg;
+  el.appendChild(wrap);
 
   // tooltip
   const tip=document.createElement('div');
