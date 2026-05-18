@@ -579,52 +579,67 @@ document.getElementById('yr').textContent = new Date().getFullYear();
   });
 
   function makeDraggable(el){
-    let dragging=false, startX=0, startY=0, elX=0, elY=0;
+    let dragging=false, offsetX=0, offsetY=0, animX=0, rafId=null;
 
     function getXY(e){ return e.touches ? {x:e.touches[0].clientX,y:e.touches[0].clientY} : {x:e.clientX,y:e.clientY}; }
 
+    // Read the sprite's current rendered position via getBoundingClientRect
+    function currentRect(){ return el.getBoundingClientRect(); }
+
     function onStart(e){
       e.preventDefault();
+      e.stopPropagation();
       const pos=getXY(e);
-      const rect=el.getBoundingClientRect();
-      startX=pos.x - rect.left;
-      startY=pos.y - rect.top;
-      elX=rect.left; elY=rect.top;
+      const rect=currentRect();
+      offsetX=pos.x - rect.left;
+      offsetY=pos.y - rect.top;
       dragging=true;
-      el.classList.add('dragging');
-      el.style.left=elX+'px';
-      el.style.top=elY+'px';
+
+      // Freeze CSS animation, lock position to where it actually is right now
+      el.style.animationPlayState='paused';
+      el.style.position='fixed';
+      el.style.left=rect.left+'px';
+      el.style.top=rect.top+'px';
       el.style.bottom='auto';
+      el.style.zIndex='999';
+      el.style.filter=`drop-shadow(0 0 22px var(--clr)) brightness(1.5)`;
+      el.style.cursor='grabbing';
     }
 
     function onMove(e){
       if(!dragging) return;
       e.preventDefault();
       const pos=getXY(e);
-      el.style.left=(pos.x - startX)+'px';
-      el.style.top=(pos.y - startY)+'px';
+      el.style.left=(pos.x - offsetX)+'px';
+      el.style.top=(pos.y - offsetY)+'px';
     }
 
     function onEnd(){
       if(!dragging) return;
       dragging=false;
-      el.classList.remove('dragging');
-      // Snap back to running strip
-      const curLeft=parseInt(el.style.left)||0;
-      el.style.removeProperty('top');
+
+      // Where did we drop it horizontally?
+      const dropX=parseFloat(el.style.left)||0;
+      const pct=Math.max(0, Math.min(dropX / window.innerWidth, 1));
+      const dur=parseFloat(getComputedStyle(el).getPropertyValue('--spd'))||12;
+
+      // Restore running — resume animation from drop position
+      el.style.removeProperty('position');
       el.style.removeProperty('left');
+      el.style.removeProperty('top');
       el.style.bottom='72px';
-      // restart animation from roughly where we dropped it
-      const pct=Math.max(0,Math.min(curLeft/window.innerWidth,1));
-      const dur=parseFloat(el.style.getPropertyValue('--spd'))||12;
-      el.style.animationDelay=`-${pct*dur}s`;
+      el.style.zIndex='';
+      el.style.filter='';
+      el.style.cursor='grab';
+      el.style.animationDelay=`-${pct * dur}s`;
+      el.style.animationPlayState='running';
     }
 
-    el.addEventListener('mousedown', onStart);
+    el.addEventListener('mousedown',  onStart);
     el.addEventListener('touchstart', onStart, {passive:false});
-    document.addEventListener('mousemove', onMove);
-    document.addEventListener('touchmove', onMove, {passive:false});
-    document.addEventListener('mouseup', onEnd);
+    document.addEventListener('mousemove',  onMove);
+    document.addEventListener('touchmove',  onMove, {passive:false});
+    document.addEventListener('mouseup',  onEnd);
     document.addEventListener('touchend', onEnd);
   }
 })();
