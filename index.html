@@ -110,31 +110,33 @@
             100%{ opacity:0; transform:translateY(-60px) scale(.8); }
         }
 
-        /* ZAP FLASH */
-        .zap-flash {
-            position:fixed; inset:0;
+        /* ZAP RING (replaces full-screen flash) */
+        .zap-ring {
+            position:fixed;
             pointer-events:none; z-index:998;
-            background: rgba(255,215,0,.25);
-            opacity:0;
-            animation: zapFlash .3s ease forwards;
+            border-radius:50%;
+            border: 3px solid #ffd700;
+            transform:translate(-50%,-50%) scale(0);
+            animation: zapRing .5s ease-out forwards;
         }
-        @keyframes zapFlash {
-            0%  { opacity:1; }
-            100%{ opacity:0; }
+        @keyframes zapRing {
+            0%  { opacity:1; transform:translate(-50%,-50%) scale(0); }
+            100%{ opacity:0; transform:translate(-50%,-50%) scale(3.5); }
         }
 
         /* FIRE BREATH */
         .fire-breath {
             position:fixed;
             pointer-events:none; z-index:997;
-            width:120px; height:40px;
-            background: radial-gradient(ellipse at left, #ff4500 0%, #ff6b35 40%, transparent 100%);
+            width:80px; height:30px;
+            background: radial-gradient(ellipse at left, #ff4500 0%, #ff6b35 50%, transparent 100%);
             border-radius:50%;
-            animation: fireBreath .5s ease-out forwards;
+            transform-origin: left center;
+            animation: fireBreath .6s ease-out forwards;
         }
         @keyframes fireBreath {
-            0%  { opacity:.9; transform:scaleX(1); }
-            100%{ opacity:0;  transform:scaleX(2.5); }
+            0%  { opacity:.85; transform:scaleX(1) scaleY(1); }
+            100%{ opacity:0;   transform:scaleX(2.2) scaleY(.5); }
         }
 
         /* SLEEP Z's */
@@ -211,12 +213,14 @@
             font-size:.8rem; cursor:pointer;
         }
 
-        /* COLLISION FLASH */
-        .col-flash {
-            position:fixed; inset:0;
+        /* COLLISION RING (no full-screen flash) */
+        .col-ring {
+            position:fixed;
             pointer-events:none; z-index:996;
-            background:rgba(255,255,255,.18);
-            animation: zapFlash .25s ease forwards;
+            border-radius:50%;
+            border: 2px solid #fff;
+            transform:translate(-50%,-50%) scale(0);
+            animation: zapRing .4s ease-out forwards;
         }
 
         /* LAYOUT */
@@ -313,9 +317,8 @@
         .stage.done   { color:var(--fire); }
 
         /* GOD MODE */
-        .god-flash { display:none; position:fixed; inset:0; background:rgba(168,85,247,.12); z-index:1001; justify-content:center; align-items:center; }
-        .god-flash.on { display:flex; animation:gFlash .6s ease; }
-        @keyframes gFlash { 0%{background:rgba(168,85,247,0)} 50%{background:rgba(168,85,247,.45)} 100%{background:rgba(168,85,247,.12)} }
+        .god-flash { display:none; position:fixed; inset:0; background:rgba(168,85,247,.08); z-index:1001; justify-content:center; align-items:center; }
+        .god-flash.on { display:flex; }
         .god-flash .msg { font-family:'Orbitron',sans-serif; font-size:1.8rem; color:var(--magic); filter:drop-shadow(0 0 20px rgba(168,85,247,.8)); animation:pulse 1.5s ease-in-out infinite; }
         .god-panel { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); width:90%; max-width:560px; background:#0d0d1a; border:2px solid var(--magic); border-radius:20px; padding:40px; z-index:1002; box-shadow:var(--glow-magic); }
         .god-panel.on { display:block; animation:panelIn .4s ease; }
@@ -513,11 +516,12 @@ function popup(x, y, text, color='#ffd700'){
   setTimeout(()=>el.remove(),1000);
 }
 
-// ── ZAP FLASH ──
-function zapFlash(){
-  const f=document.createElement('div'); f.className='zap-flash';
-  document.body.appendChild(f);
-  setTimeout(()=>f.remove(),350);
+// ── ZAP RING (no full-screen flash) ──
+function zapFlash(x,y){
+  const r=document.createElement('div'); r.className='zap-ring';
+  r.style.cssText=`left:${x}px;top:${y}px;width:60px;height:60px;`;
+  document.body.appendChild(r);
+  setTimeout(()=>r.remove(),550);
 }
 
 // ── FIRE BREATH ──
@@ -562,9 +566,10 @@ function checkCollisions(){
         const dmg=Math.floor(Math.random()*15)+5;
         popup(mx, my-20, `-${dmg} HP!`, '#ff4500');
         burst(mx, my, '#ff6b35', 6);
-        const f=document.createElement('div'); f.className='col-flash';
-        document.body.appendChild(f);
-        setTimeout(()=>f.remove(),280);
+        const r=document.createElement('div'); r.className='col-ring';
+        r.style.cssText=`left:${mx}px;top:${my}px;width:50px;height:50px;`;
+        document.body.appendChild(r);
+        setTimeout(()=>r.remove(),450);
         playBonk();
         addScore(2);
       }
@@ -576,7 +581,7 @@ setInterval(checkCollisions, 200);
 // ── SPRITE DATA ──
 const SPRITES=[
   { id:'pikachu',    img:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/25.png',  clr:'#ffd700', spd:11, name:'Pikachu',
-    onTap:(x,y)=>{ zapFlash(); burst(x,y,'#ffd700',12); popup(x,y-30,'⚡ Thunderbolt!','#ffd700'); playZap(); } },
+    onTap:(x,y)=>{ zapFlash(x,y); burst(x,y,'#ffd700',12); popup(x,y-30,'⚡ Thunderbolt!','#ffd700'); playZap(); } },
   { id:'charizard',  img:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/6.png',   clr:'#ff4500', spd:9,  name:'Charizard',
     onTap:(x,y)=>{ fireBreath(x,y); burst(x,y,'#ff4500',10); popup(x,y-30,'🔥 Flamethrower!','#ff4500'); playFire(); } },
   { id:'bulbasaur',  img:'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/1.png',   clr:'#4caf50', spd:18, name:'Bulbasaur',
