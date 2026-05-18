@@ -535,34 +535,30 @@ function singNotes(x, y){
 }
 
 // ── COLLISION CHECK ──
-const colCooldown={};
+// Collision: silently push creatures apart — no effects, no score, no sound
+// Effects only fire on real user taps (onTap handler)
 function checkCollisions(){
-  const els=Array.from(document.querySelectorAll('.runner'));
-  const now=Date.now();
-  for(let i=0;i<els.length;i++){
-    for(let j=i+1;j<els.length;j++){
-      const key=els[i].dataset.id+'|'+els[j].dataset.id;
-      if(colCooldown[key] && now-colCooldown[key]<2000) continue; // 2s cooldown per pair
-      const a=els[i].getBoundingClientRect(), b=els[j].getBoundingClientRect();
-      const cx=Math.abs((a.left+a.width/2)-(b.left+b.width/2));
-      const cy=Math.abs((a.top+a.height/2)-(b.top+b.height/2));
-      if(cx<52 && cy<52){
-        colCooldown[key]=now;
-        const mx=(a.left+b.left)/2, my=(a.top+b.top)/2;
-        const dmg=Math.floor(Math.random()*15)+5;
-        popup(mx, my-20, `-${dmg} HP!`, '#ff4500');
-        burst(mx, my, '#ff6b35', 6);
-        const r=document.createElement('div'); r.className='col-ring';
-        r.style.cssText=`left:${mx}px;top:${my}px;width:50px;height:50px;`;
-        document.body.appendChild(r);
-        setTimeout(()=>r.remove(),450);
-        playBonk();
-        addScore(2);
+  const runners=Array.from(document.querySelectorAll('.runner'));
+  for(let i=0;i<runners.length;i++){
+    for(let j=i+1;j<runners.length;j++){
+      const a=runners[i].getBoundingClientRect(), b=runners[j].getBoundingClientRect();
+      const acx=a.left+a.width/2,  acy=a.top+a.height/2;
+      const bcx=b.left+b.width/2,  bcy=b.top+b.height/2;
+      const dx=acx-bcx, dy=acy-bcy;
+      const dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<54 && dist>0){
+        // push both apart — touch the velocity stored in their closure
+        // We don't have direct access to vx/vy, so nudge via stored ref
+        const nx=dx/dist, ny=dy/dist;
+        const push=2.5;
+        // store nudge on element, physics tick will pick it up
+        runners[i]._nudge={ x: nx*push, y: ny*push };
+        runners[j]._nudge={ x:-nx*push, y:-ny*push };
       }
     }
   }
 }
-setInterval(checkCollisions, 200);
+setInterval(checkCollisions, 100);
 
 // ── ORIGINAL CREATURES (100% in-house SVG — no external IP) ──
 const CREATURE_SVG = {
@@ -729,9 +725,11 @@ SPRITES.forEach((sp,idx)=>{
 // ── SPRITE PHYSICS ENGINE ──
 function initSprite(el, sp, idx){
   // State
-  let x = Math.random() * (window.innerWidth - 60);
-  let y = window.innerHeight - 120 - Math.random()*30;
-  let vx = (2 + Math.random()*1.5) * (Math.random()<.5?1:-1);
+  // Spread evenly across screen width so they never start clustered
+  const slotW = (window.innerWidth - 60) / 8;
+  let x = slotW * idx + Math.random() * (slotW * 0.6);
+  let y = window.innerHeight - 140 - Math.random()*80;
+  let vx = (1.2 + Math.random()*1.8) * (idx % 2 === 0 ? 1 : -1);
   let vy = 0;
   const FLOOR = window.innerHeight - 120;
   const GRAVITY = 0.4;
@@ -754,6 +752,8 @@ function initSprite(el, sp, idx){
 
   function tick(){
     if(!dragging){
+      // apply collision nudge if set
+      if(el._nudge){ vx+=el._nudge.x; vy+=el._nudge.y; el._nudge=null; }
       // gravity
       vy += GRAVITY;
       x += vx;
